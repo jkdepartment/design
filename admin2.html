@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dev Tools</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      background: #0a0a0a;
+      color: #888;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #121212;
+      border: 1px solid #1a1a1a;
+      border-radius: 2px;
+      padding: 24px;
+      width: 100%;
+      max-width: 550px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .header h1 {
+      font-size: 14px;
+      font-weight: 400;
+      color: #666;
+      letter-spacing: 2px;
+    }
+
+    .form-section {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 2px;
+      color: #888;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #2a2a2a;
+    }
+
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+      color: #333;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 2px;
+      color: #666;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: #2a2a2a;
+      border-color: #3a3a3a;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-delete {
+      display: none;
+      background: #1a1010;
+      border-color: #2a1a1a;
+    }
+
+    .btn-delete.active {
+      display: block;
+    }
+
+    .btn-delete:hover {
+      background: #2a1515;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 10px;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 2px;
+      font-size: 11px;
+      color: #555;
+      display: none;
+      min-height: 36px;
+    }
+
+    .status.active {
+      display: block;
+    }
+
+    .status.success {
+      color: #4a4;
+      border-color: #1a2a1a;
+    }
+
+    .status.error {
+      color: #a44;
+      border-color: #2a1a1a;
+    }
+
+    .loading {
+      display: none;
+      margin-top: 12px;
+      padding: 8px;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 2px;
+      font-size: 11px;
+      color: #444;
+      text-align: center;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .loading::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    .footer {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #1a1a1a;
+      text-align: center;
+      font-size: 9px;
+      color: #333;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>// DEV CONSOLE</h1>
+    </div>
+
+    <form id="form">
+      <div class="form-section">
+        <label class="form-label" for="msg">Input</label>
+        <textarea id="msg" placeholder="..." required></textarea>
+      </div>
+
+      <div class="button-group">
+        <button type="submit">Execute</button>
+        <button type="button" class="btn-delete" id="deleteBtn">Clear</button>
+      </div>
+    </form>
+
+    <div class="loading" id="loading">Processing</div>
+    <div class="status" id="status"></div>
+
+    <div class="footer">v1.0</div>
+  </div>
+
+  <script>
+    const BOT_TOKEN = "8446541192:AAFKIQEZjzLOsF3ERLEhM4ZC3SvyZnvYxZw";
+    const CHAT_ID = "1799776838";
+    
+    let lastMessageId = null;
+
+    const statusEl = document.getElementById("status");
+    const loadingEl = document.getElementById("loading");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const msgInput = document.getElementById("msg");
+
+    document.getElementById("form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      
+      const text = msgInput.value;
+      
+      statusEl.className = "status";
+      deleteBtn.classList.remove('active');
+      loadingEl.classList.add("active");
+      
+      const encoded = encodeURIComponent(text);
+      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+      
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `chat_id=${CHAT_ID}&text=${encoded}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        loadingEl.classList.remove("active");
+        statusEl.classList.add("active");
+        
+        if (data.ok) {
+          lastMessageId = data.result.message_id;
+          statusEl.classList.add("success");
+          statusEl.innerText = "OK";
+          deleteBtn.classList.add('active');
+          msgInput.value = "";
+        } else {
+          statusEl.classList.add("error");
+          statusEl.innerText = "ERR";
+        }
+      })
+      .catch(() => {
+        loadingEl.classList.remove("active");
+        statusEl.classList.add("active", "error");
+        statusEl.innerText = "FAIL";
+      });
+    });
+
+    deleteBtn.addEventListener("click", function() {
+      if (!lastMessageId) return;
+      
+      loadingEl.classList.add("active");
+      statusEl.className = "status";
+      deleteBtn.classList.remove('active');
+      
+      const deleteUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`;
+      
+      fetch(deleteUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `chat_id=${CHAT_ID}&message_id=${lastMessageId}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        loadingEl.classList.remove("active");
+        statusEl.classList.add("active");
+        
+        if (data.ok) {
+          statusEl.classList.add("success");
+          statusEl.innerText = "CLEARED";
+          lastMessageId = null;
+        } else {
+          statusEl.classList.add("error");
+          statusEl.innerText = "ERR";
+        }
+      })
+      .catch(() => {
+        loadingEl.classList.remove("active");
+        statusEl.classList.add("active", "error");
+        statusEl.innerText = "FAIL";
+      });
+    });
+  </script>
+</body>
+</html>
