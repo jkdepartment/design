@@ -473,10 +473,13 @@
       });
     });
 
+    // Store messages locally
+    let messageStore = [];
+
     // View messages functionality
     async function fetchMessages() {
       const container = document.getElementById('messagesContainer');
-      const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`;
+      const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-100`;
 
       try {
         container.innerHTML = '<div class="loading active">Loading</div>';
@@ -489,44 +492,63 @@
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const oneHourAgo = currentTime - (60 * 60);
+        const oneHourAgo = currentTime - (5 * 60);
         
-        const updates = data.result.filter(update => 
-          update.message && 
-          update.message.chat.id == CHAT_ID &&
-          update.message.date >= oneHourAgo
-        );
+        // Get all messages from updates
+        const newMessages = data.result
+          .filter(update => 
+            update.message && 
+            update.message.chat.id == CHAT_ID
+          )
+          .map(update => update.message);
 
-        if (updates.length === 0) {
+        // Merge with stored messages and remove duplicates
+        newMessages.forEach(msg => {
+          if (!messageStore.find(m => m.message_id === msg.message_id)) {
+            messageStore.push(msg);
+          }
+        });
+
+        // Filter messages from last hour
+        const recentMessages = messageStore.filter(msg => msg.date >= oneHourAgo);
+        
+        // Update store to only keep recent messages
+        messageStore = recentMessages;
+
+        if (recentMessages.length === 0) {
           container.innerHTML = '<div class="no-messages">NO LOGS (1HR)</div>';
           return;
         }
 
         container.innerHTML = '';
 
-        updates.reverse().forEach(update => {
-          if (update.message) {
-            const msg = update.message;
-            const messageItem = document.createElement('div');
-            messageItem.className = 'message-item';
+        // Sort by date (oldest first)
+        recentMessages.sort((a, b) => a.date - b.date);
 
-            const date = new Date(msg.date * 1000);
-            const timeString = date.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false
-            });
+        recentMessages.forEach(msg => {
+          const messageItem = document.createElement('div');
+          messageItem.className = 'message-item';
 
-            messageItem.innerHTML = `
-              <div class="message-header">
-                <span>ID: ${msg.message_id}</span>
-                <span>${timeString}</span>
-              </div>
-              <div class="message-text">${msg.text || '(empty)'}</div>
-            `;
+          const date = new Date(msg.date * 1000);
+          const timeString = date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false
+          });
 
-            container.appendChild(messageItem);
-          }
+          const now = Date.now() / 1000;
+          const age = Math.floor((now - msg.date) / 60); // minutes ago
+          const ageText = age < 1 ? 'now' : `${age}m`;
+
+          messageItem.innerHTML = `
+            <div class="message-header">
+              <span>ID: ${msg.message_id}</span>
+              <span>${timeString} (${ageText})</span>
+            </div>
+            <div class="message-text">${msg.text || '(empty)'}</div>
+          `;
+
+          container.appendChild(messageItem);
         });
 
         container.scrollTop = container.scrollHeight;
