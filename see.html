@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Messenger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .messenger-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .header-text h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-text p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f7fb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+            background: #fee;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .message-group {
+            margin-bottom: 25px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .sender-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .message-bubble {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin-left: 46px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            word-wrap: break-word;
+        }
+
+        .message-text {
+            color: #2c3e50;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .timestamp {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chat-id {
+            background: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .no-messages {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+        }
+
+        .no-messages-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="messenger-container">
+        <div class="header">
+            <div class="header-icon">📱</div>
+            <div class="header-text">
+                <h2>Telegram Messages</h2>
+                <p id="message-count">Loading messages...</p>
+            </div>
+        </div>
+        <div class="messages-container" id="messagesContainer">
+            <div class="loading">Loading messages...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.telegram.org/bot8446541192:AAFKIQEZjzLOsF3ERLEhM4ZC3SvyZnvYxZw/getUpdates';
+
+        async function fetchMessages() {
+            const container = document.getElementById('messagesContainer');
+            const messageCount = document.getElementById('message-count');
+
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                if (!data.ok) {
+                    throw new Error('Failed to fetch messages');
+                }
+
+                const updates = data.result;
+
+                if (updates.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-messages">
+                            <div class="no-messages-icon">💬</div>
+                            <h3>No messages yet</h3>
+                            <p>Send a message to your bot to see it here!</p>
+                        </div>
+                    `;
+                    messageCount.textContent = 'No messages';
+                    return;
+                }
+
+                container.innerHTML = '';
+                messageCount.textContent = `${updates.length} message${updates.length !== 1 ? 's' : ''}`;
+
+                updates.forEach(update => {
+                    if (update.message) {
+                        const msg = update.message;
+                        const messageGroup = document.createElement('div');
+                        messageGroup.className = 'message-group';
+
+                        const firstName = msg.from.first_name || 'User';
+                        const lastName = msg.from.last_name || '';
+                        const fullName = `${firstName} ${lastName}`.trim();
+                        const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
+
+                        const date = new Date(msg.date * 1000);
+                        const timeString = date.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                        const dateString = date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+
+                        messageGroup.innerHTML = `
+                            <div class="message-header">
+                                <div class="avatar">${initials}</div>
+                                <span class="sender-name">${fullName}</span>
+                            </div>
+                            <div class="message-bubble">
+                                <div class="message-text">${msg.text || '(No text content)'}</div>
+                                <div class="message-meta">
+                                    <span class="timestamp">🕒 ${timeString} • ${dateString}</span>
+                                    <span class="chat-id">Chat ID: ${msg.chat.id}</span>
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(messageGroup);
+                    }
+                });
+
+                container.scrollTop = container.scrollHeight;
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error Loading Messages</h3>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px; font-size: 14px;">Make sure the bot token is correct and the bot has received messages.</p>
+                    </div>
+                `;
+                messageCount.textContent = 'Error';
+            }
+        }
+
+        fetchMessages();
+        setInterval(fetchMessages, 5000);
+    </script>
+</body>
+</html>
