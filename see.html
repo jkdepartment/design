@@ -231,7 +231,7 @@
 
                 // Filter messages for specific chat ID and within last 60 minutes
                 const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-                const oneHourAgo = currentTime - (60 * 60); // 60 minutes ago
+                const oneHourAgo = currentTime - (5 * 60); // 60 minutes ago
                 
                 const updates = data.result.filter(update => 
                     update.message && 
