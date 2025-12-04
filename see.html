@@ -229,20 +229,26 @@
                     throw new Error('Failed to fetch messages');
                 }
 
-                // Filter messages for specific chat ID only
+                // Filter messages for specific chat ID and within last 60 minutes
+                const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+                const oneHourAgo = currentTime - (60 * 60); // 60 minutes ago
+                
                 const updates = data.result.filter(update => 
-                    update.message && update.message.chat.id === TARGET_CHAT_ID
+                    update.message && 
+                    update.message.chat.id === TARGET_CHAT_ID &&
+                    update.message.date >= oneHourAgo
                 );
 
                 if (updates.length === 0) {
                     container.innerHTML = `
                         <div class="no-messages">
                             <div class="no-messages-icon">🔒</div>
-                            <h3>No messages in this secret chat</h3>
-                            <p>Messages will appear here once received</p>
+                            <h3>No recent messages</h3>
+                            <p>Messages auto-delete after 1 hour</p>
+                            <p style="margin-top: 10px; font-size: 13px; color: #555;">🕐 Self-destructing messages active</p>
                         </div>
                     `;
-                    messageCount.textContent = 'No messages';
+                    messageCount.textContent = 'No active messages';
                     return;
                 }
 
