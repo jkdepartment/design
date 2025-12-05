@@ -249,6 +249,7 @@
       border: 1px solid #1a1a1a;
       border-radius: 2px;
       animation: fadeIn 0.3s ease;
+      position: relative;
     }
 
     @keyframes fadeIn {
@@ -271,6 +272,36 @@
       font-size: 12px;
       line-height: 1.6;
       word-wrap: break-word;
+      margin-bottom: 8px;
+    }
+
+    .message-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    .delete-msg-btn {
+      padding: 6px 12px;
+      background: #1a1010;
+      border: 1px solid #2a1a1a;
+      border-radius: 2px;
+      color: #666;
+      font-family: 'Consolas', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .delete-msg-btn:hover {
+      background: #2a1515;
+      color: #888;
+    }
+
+    .delete-msg-btn:active {
+      transform: scale(0.95);
     }
 
     .no-messages {
@@ -283,6 +314,85 @@
     .refresh-btn {
       width: 100%;
       margin-bottom: 16px;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 2px;
+      padding: 20px 30px;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      display: none;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .popup.show {
+      display: block;
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .popup-message {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    .popup-message.success {
+      color: #4a4;
+    }
+
+    .popup-message.error {
+      color: #a44;
+    }
+
+    .popup-btn {
+      padding: 8px 20px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 2px;
+      color: #666;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .popup-btn:hover {
+      background: #3a3a3a;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.show {
+      display: block;
     }
 
     ::-webkit-scrollbar {
@@ -329,9 +439,7 @@
       <form id="form">
         <div class="form-section">
           <label class="form-label" for="msg">Input</label>
-          
-
-              <textarea id="msg" placeholder="Write your code!" required>
+          <textarea id="msg" placeholder="Write your code!" required>
 🎬 Movie Request Notice
 
 Please send the movie name you want using the receiver link within 5 minutes.
@@ -367,12 +475,39 @@ Thank you for using our bot!
     <div class="footer">v1.0</div>
   </div>
 
+  <div class="overlay" id="overlay" onclick="closePopup()"></div>
+  <div class="popup" id="popup">
+    <div class="popup-message" id="popupMessage">Message</div>
+    <button class="popup-btn" onclick="closePopup()">OK</button>
+  </div>
+
   <script>
     const BOT_TOKEN = "8446541192:AAFKIQEZjzLOsF3ERLEhM4ZC3SvyZnvYxZw";
     const CHAT_ID = "1799776838";
     
     let lastMessageId = null;
     let autoRefreshInterval = null;
+
+    // Popup functions
+    function showPopup(message, type = 'info') {
+      const popup = document.getElementById('popup');
+      const overlay = document.getElementById('overlay');
+      const popupMessage = document.getElementById('popupMessage');
+      
+      popupMessage.textContent = message;
+      popupMessage.className = 'popup-message ' + type;
+      
+      overlay.classList.add('show');
+      popup.classList.add('show');
+    }
+
+    function closePopup() {
+      const popup = document.getElementById('popup');
+      const overlay = document.getElementById('overlay');
+      
+      overlay.classList.remove('show');
+      popup.classList.remove('show');
+    }
 
     // Tab switching
     function switchTab(tabName) {
@@ -501,7 +636,7 @@ Thank you for using our bot!
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const oneHourAgo = currentTime - (5 * 60);
+        const oneHourAgo = currentTime - (10 * 60);
         
         // Get all messages from updates
         const newMessages = data.result
@@ -525,7 +660,7 @@ Thank you for using our bot!
         messageStore = recentMessages;
 
         if (recentMessages.length === 0) {
-          container.innerHTML = '<div class="no-messages">NO LOGS (1HR)</div>';
+          container.innerHTML = '<div class="no-messages">NO LOGS (10mins)</div>';
           return;
         }
 
@@ -555,6 +690,9 @@ Thank you for using our bot!
               <span>${timeString} (${ageText})</span>
             </div>
             <div class="message-text">${msg.text || '(empty)'}</div>
+            <div class="message-actions">
+              <button class="delete-msg-btn" onclick="deleteMessage(${msg.message_id})">Delete</button>
+            </div>
           `;
 
           container.appendChild(messageItem);
@@ -564,6 +702,35 @@ Thank you for using our bot!
 
       } catch (error) {
         container.innerHTML = '<div class="no-messages">FAIL</div>';
+      }
+    }
+
+    // Delete individual message
+    async function deleteMessage(messageId) {
+      const deleteUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`;
+      
+      try {
+        const response = await fetch(deleteUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `chat_id=${CHAT_ID}&message_id=${messageId}`
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          // Remove from local store
+          messageStore = messageStore.filter(msg => msg.message_id !== messageId);
+          // Refresh display
+          fetchMessages();
+          showPopup('DELETED', 'success');
+        } else {
+          showPopup('ALREADY DELETED', 'error');
+        }
+      } catch (error) {
+        showPopup('FAIL', 'error');
       }
     }
   </script>
