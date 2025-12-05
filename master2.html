@@ -611,18 +611,18 @@
           // Remove from local store
           messageStore = messageStore.filter(msg => msg.message_id !== messageId);
           // Refresh display
-           button.textContent = 'Deleted';
-          button.style.color = '#555';
+            buttonElement.textContent = 'Deleted';
+          buttonElement.style.color = '#555';
           fetchMessages();
         } else {
          // alert('ERR: Cannot delete');
-           button.textContent = 'Already Deleted';
-          button.style.color = '#555';
+            buttonElement.textContent = 'Already Deleted';
+          buttonElement.style.color = '#555';
         }
       } catch (error) {
        // alert('FAIL: Network error');
-         button.textContent = 'Network error';
-          button.style.color = '#555';
+          buttonElement.textContent = 'Network Error';
+          buttonElement.style.color = '#555';
       }
     }
   </script>
