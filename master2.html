@@ -439,7 +439,14 @@
       <form id="form">
         <div class="form-section">
           <label class="form-label" for="msg">Input</label>
-          <textarea id="msg" placeholder="..." required></textarea>
+          <textarea id="msg" placeholder="Write your code!" required>
+🎬 Movie Request Notice
+
+Please send the movie name you want using the receiver link within 5 minutes.
+⏳ Requests received after 5 minutes will not be processed.
+
+Thank you for using our bot!
+</textarea>
         </div>
 
         <div class="button-group">
@@ -629,7 +636,7 @@
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const oneHourAgo = currentTime - (60 * 60);
+        const oneHourAgo = currentTime - (10 * 60);
         
         // Get all messages from updates
         const newMessages = data.result
@@ -653,7 +660,7 @@
         messageStore = recentMessages;
 
         if (recentMessages.length === 0) {
-          container.innerHTML = '<div class="no-messages">NO LOGS (1HR)</div>';
+          container.innerHTML = '<div class="no-messages">NO LOGS (10mins)</div>';
           return;
         }
 
