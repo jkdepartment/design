@@ -316,6 +316,85 @@
       margin-bottom: 16px;
     }
 
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 2px;
+      padding: 20px 30px;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      display: none;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .popup.show {
+      display: block;
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .popup-message {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    .popup-message.success {
+      color: #4a4;
+    }
+
+    .popup-message.error {
+      color: #a44;
+    }
+
+    .popup-btn {
+      padding: 8px 20px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 2px;
+      color: #666;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .popup-btn:hover {
+      background: #3a3a3a;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -389,12 +468,39 @@
     <div class="footer">v1.0</div>
   </div>
 
+  <div class="overlay" id="overlay" onclick="closePopup()"></div>
+  <div class="popup" id="popup">
+    <div class="popup-message" id="popupMessage">Message</div>
+    <button class="popup-btn" onclick="closePopup()">OK</button>
+  </div>
+
   <script>
     const BOT_TOKEN = "8446541192:AAFKIQEZjzLOsF3ERLEhM4ZC3SvyZnvYxZw";
     const CHAT_ID = "1799776838";
     
     let lastMessageId = null;
     let autoRefreshInterval = null;
+
+    // Popup functions
+    function showPopup(message, type = 'info') {
+      const popup = document.getElementById('popup');
+      const overlay = document.getElementById('overlay');
+      const popupMessage = document.getElementById('popupMessage');
+      
+      popupMessage.textContent = message;
+      popupMessage.className = 'popup-message ' + type;
+      
+      overlay.classList.add('show');
+      popup.classList.add('show');
+    }
+
+    function closePopup() {
+      const popup = document.getElementById('popup');
+      const overlay = document.getElementById('overlay');
+      
+      overlay.classList.remove('show');
+      popup.classList.remove('show');
+    }
 
     // Tab switching
     function switchTab(tabName) {
@@ -611,18 +717,13 @@
           // Remove from local store
           messageStore = messageStore.filter(msg => msg.message_id !== messageId);
           // Refresh display
-            buttonElement.textContent = 'Deleted';
-          buttonElement.style.color = '#555';
           fetchMessages();
+          showPopup('DELETED', 'success');
         } else {
-         // alert('ERR: Cannot delete');
-            buttonElement.textContent = 'Already Deleted';
-          buttonElement.style.color = '#555';
+          showPopup('ALREADY DELETED', 'error');
         }
       } catch (error) {
-       // alert('FAIL: Network error');
-          buttonElement.textContent = 'Network Error';
-          buttonElement.style.color = '#555';
+        showPopup('FAIL', 'error');
       }
     }
   </script>
