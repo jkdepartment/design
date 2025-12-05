@@ -636,7 +636,7 @@ Thank you for using our bot!
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const oneHourAgo = currentTime - (10 * 60);
+        const oneHourAgo = currentTime - (12 * 60 * 60);
         
         // Get all messages from updates
         const newMessages = data.result
@@ -660,7 +660,7 @@ Thank you for using our bot!
         messageStore = recentMessages;
 
         if (recentMessages.length === 0) {
-          container.innerHTML = '<div class="no-messages">NO LOGS (10mins)</div>';
+          container.innerHTML = '<div class="no-messages">NO LOGS (12hour)</div>';
           return;
         }
 
